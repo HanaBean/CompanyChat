@@ -1,0 +1,9 @@
+{
+  "name": "company-messenger-portable",
+  "version": "1.0.0",
+  "description": "사내메신저 포터블 버전",
+  "main": "portable-launcher.js",
+  "scripts": {
+    "start-portable": "node portable-launcher.js"
+  }
+}
