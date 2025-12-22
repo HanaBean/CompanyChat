@@ -4,6 +4,7 @@
   "description": "Company Internal Messenger",
   "author": "Company",
   "main": "public/electron.js",
+  "homepage": "./",
   "private": true,
   "dependencies": {
     "react": "^18.2.0",

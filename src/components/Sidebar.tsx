@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 import { theme } from '../styles/theme';
 
@@ -9,20 +9,56 @@ const SidebarContainer = styled.div`
   flex-direction: column;
   align-items: center;
   padding: 20px 0;
+  position: relative;
+`;
+
+const ProfileSection = styled.div`
+  position: relative;
+  margin-bottom: 30px;
 `;
 
 const ProfileImage = styled.div`
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background-color: #ffd700;
+  background-color: ${theme.colors.primary};
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #3c3c3c;
+  color: white;
   font-weight: bold;
-  margin-bottom: 30px;
   cursor: pointer;
+  font-size: 14px;
+`;
+
+const ProfileMenu = styled.div<{ show: boolean }>`
+  position: absolute;
+  top: 50px;
+  left: 0;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  display: ${props => props.show ? 'block' : 'none'};
+  min-width: 200px;
+  overflow: hidden;
+`;
+
+const ProfileInfo = styled.div`
+  padding: 15px;
+  border-bottom: 1px solid #eee;
+`;
+
+const UserName = styled.div`
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 4px;
+`;
+
+const UserStatus = styled.div`
+  font-size: 12px;
+  color: #666;
 `;
 
 const MenuButton = styled.button<{ isActive?: boolean }>`
@@ -45,6 +81,21 @@ const MenuButton = styled.button<{ isActive?: boolean }>`
   }
 `;
 
+const LogoutButton = styled.button`
+  width: 100%;
+  padding: 12px 15px;
+  border: none;
+  background: #f8f9fa;
+  color: #666;
+  cursor: pointer;
+  font-size: 14px;
+  text-align: left;
+  
+  &:hover {
+    background: #e9ecef;
+  }
+`;
+
 const IconSvg = styled.svg`
   width: 20px;
   height: 20px;
@@ -53,15 +104,51 @@ const IconSvg = styled.svg`
 
 type ViewMode = 'chat' | 'organization';
 
+interface User {
+  id: string;
+  name: string;
+}
+
 interface SidebarProps {
   viewMode: ViewMode;
   onViewModeChange: (mode: ViewMode) => void;
+  user: User;
+  onLogout: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ viewMode, onViewModeChange }) => {
+const Sidebar: React.FC<SidebarProps> = ({ viewMode, onViewModeChange, user, onLogout }) => {
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+
+  const getInitials = (name: string): string => {
+    return name.charAt(0);
+  };
+
+  const handleProfileClick = () => {
+    setShowProfileMenu(!showProfileMenu);
+  };
+
+  const handleLogout = () => {
+    setShowProfileMenu(false);
+    onLogout();
+  };
+
   return (
     <SidebarContainer>
-      <ProfileImage>홍</ProfileImage>
+      <ProfileSection>
+        <ProfileImage onClick={handleProfileClick}>
+          {getInitials(user.name)}
+        </ProfileImage>
+        <ProfileMenu show={showProfileMenu}>
+          <ProfileInfo>
+            <UserName>{user.name}</UserName>
+            <UserStatus>온라인</UserStatus>
+          </ProfileInfo>
+          <LogoutButton onClick={handleLogout}>
+            로그아웃
+          </LogoutButton>
+        </ProfileMenu>
+      </ProfileSection>
+
       <MenuButton 
         title="채팅" 
         isActive={viewMode === 'chat'}

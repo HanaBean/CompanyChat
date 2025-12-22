@@ -141,14 +141,109 @@ const MessageGroup = styled.div`
   margin-bottom: 20px;
 `;
 
+const DateSeparator = styled.div`
+  text-align: center;
+  margin: 20px 0;
+  position: relative;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background-color: #e0e0e0;
+    z-index: 1;
+  }
+`;
+
+const DateText = styled.span`
+  background-color: #f8f9fa;
+  padding: 5px 15px;
+  border-radius: 15px;
+  font-size: 12px;
+  color: #666;
+  border: 1px solid #e0e0e0;
+  position: relative;
+  z-index: 2;
+`;
+
+const MessageWithProfile = styled.div<{ isMine: boolean }>`
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 15px;
+  flex-direction: ${props => props.isMine ? 'row-reverse' : 'row'};
+`;
+
+const ProfileSection = styled.div<{ isMine: boolean }>`
+  display: flex;
+  flex-direction: column;
+  align-items: ${props => props.isMine ? 'flex-end' : 'flex-start'};
+  min-width: 50px;
+`;
+
+const ProfileImage = styled.div`
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, ${theme.colors.primary}, ${theme.colors.primaryHover});
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  font-size: 14px;
+  margin-bottom: 4px;
+`;
+
+const ProfileInfo = styled.div<{ isMine: boolean }>`
+  text-align: ${props => props.isMine ? 'right' : 'left'};
+`;
+
+const ProfileName = styled.div`
+  font-size: 12px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 2px;
+`;
+
+const ProfileDepartment = styled.div`
+  font-size: 10px;
+  color: #666;
+`;
+
+const MessageContent = styled.div<{ isMine: boolean }>`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: ${props => props.isMine ? 'flex-end' : 'flex-start'};
+  max-width: calc(100% - 70px);
+`;
+
+const MessageRow = styled.div<{ isMine: boolean }>`
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  flex-direction: ${props => props.isMine ? 'row-reverse' : 'row'};
+`;
+
+const MessageTime = styled.span`
+  font-size: 11px;
+  color: #999;
+  white-space: nowrap;
+`;
+
 const Message = styled.div<{ isMine: boolean }>`
   display: flex;
   justify-content: ${props => props.isMine ? 'flex-end' : 'flex-start'};
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 `;
 
 const MessageBubble = styled.div<{ isMine: boolean; isRead?: boolean }>`
-  max-width: 60%;
+  max-width: 420px;
+  min-width: 60px;
   padding: 10px 15px;
   border-radius: 18px;
   background-color: ${props => {
@@ -163,6 +258,9 @@ const MessageBubble = styled.div<{ isMine: boolean; isRead?: boolean }>`
   line-height: 1.4;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
   border: ${props => props.isRead && props.isMine ? '1px solid #e0e0e0' : 'none'};
+  word-wrap: break-word;
+  word-break: break-word;
+  white-space: pre-wrap;
 `;
 
 const MessageImage = styled.img`
@@ -192,11 +290,6 @@ const MessageInfo = styled.div<{ isMine: boolean }>`
   gap: 8px;
   margin-top: 4px;
   justify-content: ${props => props.isMine ? 'flex-end' : 'flex-start'};
-`;
-
-const MessageTime = styled.span`
-  font-size: 11px;
-  color: #999;
 `;
 
 const SenderName = styled.span`
@@ -432,8 +525,11 @@ const MessageInput = styled.textarea`
   resize: none;
   font-size: 14px;
   line-height: 1.4;
-  max-height: 100px;
+  min-height: 20px;
+  max-height: 120px;
   outline: none;
+  font-family: inherit;
+  overflow-y: auto;
   
   &:focus {
     border-color: ${theme.colors.primary};
@@ -485,7 +581,9 @@ interface Message {
   id: string;
   text: string;
   sender: string;
+  senderDepartment?: string;
   timestamp: string;
+  date: string; // 날짜 정보 추가
   isMine: boolean;
   image?: string;
   type?: 'text' | 'image' | 'file';
@@ -505,6 +603,8 @@ interface PreviewItem {
 
 interface ChatWindowProps {
   selectedChat: Chat | null;
+  currentUser: { id: string; name: string };
+  onClearChatHistory: (chatId: string) => void;
 }
 
 const mockMessages: { [chatId: string]: Message[] } = {
@@ -513,21 +613,27 @@ const mockMessages: { [chatId: string]: Message[] } = {
       id: '1',
       text: '안녕하세요! 오늘 회의 자료 준비는 어떻게 되고 있나요?',
       sender: '김철수',
+      senderDepartment: '품질관리팀',
       timestamp: '오후 1:30',
+      date: '2025-12-22',
       isMine: false
     },
     {
       id: '2',
       text: '네, 거의 완료되었습니다. 2시까지 공유드리겠습니다.',
       sender: '나',
+      senderDepartment: '개발팀',
       timestamp: '오후 1:32',
+      date: '2025-12-22',
       isMine: true
     },
     {
       id: '3',
       text: '감사합니다. 그럼 회의실에서 뵙겠습니다.',
       sender: '김철수',
+      senderDepartment: '품질관리팀',
       timestamp: '오후 1:35',
+      date: '2025-12-22',
       isMine: false
     }
   ],
@@ -536,20 +642,35 @@ const mockMessages: { [chatId: string]: Message[] } = {
       id: '4',
       text: '이번 스프린트 계획 공유드립니다.',
       sender: '이팀장',
+      senderDepartment: '개발팀',
       timestamp: '오후 1:15',
+      date: '2025-12-21',
       isMine: false
     },
     {
       id: '5',
       text: '확인했습니다. 질문이 있으면 말씀드리겠습니다.',
       sender: '나',
+      senderDepartment: '개발팀',
       timestamp: '오후 1:20',
+      date: '2025-12-21',
       isMine: true
+    }
+  ],
+  '3': [
+    {
+      id: '6',
+      text: '문서 검토 완료했습니다.',
+      sender: '박영희',
+      senderDepartment: '기획팀',
+      timestamp: '오전 11:20',
+      date: '2025-12-20',
+      isMine: false
     }
   ]
 };
 
-const ChatWindow: React.FC<ChatWindowProps> = ({ selectedChat }) => {
+const ChatWindow: React.FC<ChatWindowProps> = ({ selectedChat, currentUser, onClearChatHistory }) => {
   const [message, setMessage] = useState('');
   const [chatMessages, setChatMessages] = useState<{ [chatId: string]: Message[] }>(mockMessages);
   const [showPasteIndicator, setShowPasteIndicator] = useState(false);
@@ -571,6 +692,59 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ selectedChat }) => {
   // 현재 선택된 채팅의 미리보기 아이템들
   const currentPreviewItems = selectedChat ? (previewItemsByChat[selectedChat.id] || []) : [];
 
+  // 날짜 포맷팅 함수
+  const formatDate = (dateString: string): string => {
+    const today = new Date();
+    const messageDate = new Date(dateString);
+    const todayString = today.toISOString().split('T')[0];
+    
+    if (dateString === todayString) {
+      return '오늘';
+    }
+    
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayString = yesterday.toISOString().split('T')[0];
+    
+    if (dateString === yesterdayString) {
+      return '어제';
+    }
+    
+    // 올해인지 확인
+    if (messageDate.getFullYear() === today.getFullYear()) {
+      return messageDate.toLocaleDateString('ko-KR', { 
+        month: 'long', 
+        day: 'numeric' 
+      });
+    }
+    
+    return messageDate.toLocaleDateString('ko-KR', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+  };
+
+  // 프로필 이미지 이니셜 생성
+  const getInitials = (name: string): string => {
+    return name.charAt(0);
+  };
+
+  // 메시지를 날짜별로 그룹화
+  const groupMessagesByDate = (messages: Message[]) => {
+    const groups: { [date: string]: Message[] } = {};
+    
+    messages.forEach(message => {
+      const date = message.date;
+      if (!groups[date]) {
+        groups[date] = [];
+      }
+      groups[date].push(message);
+    });
+    
+    return groups;
+  };
+
   const handleSendMessage = () => {
     if (!selectedChat) return;
     
@@ -581,18 +755,22 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ selectedChat }) => {
     if (!hasText && !hasPreview) return;
     
     const chatId = selectedChat.id;
+    const now = new Date();
+    const currentDate = now.toISOString().split('T')[0];
     
     // 텍스트 메시지 전송
     if (hasText) {
       const textMessage: Message = {
         id: `msg_${Date.now()}`,
         text: message.trim(),
-        sender: '나',
-        timestamp: new Date().toLocaleTimeString('ko-KR', { 
+        sender: currentUser.name,
+        senderDepartment: '개발팀',
+        timestamp: now.toLocaleTimeString('ko-KR', { 
           hour: 'numeric', 
           minute: '2-digit',
           hour12: true 
         }),
+        date: currentDate,
         isMine: true,
         type: 'text',
         isRead: false
@@ -636,15 +814,18 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ selectedChat }) => {
   const handleSendImage = (imageData: string) => {
     if (selectedChat) {
       const chatId = selectedChat.id; // 채팅 ID를 미리 저장
+      const now = new Date();
       const newMessage: Message = {
         id: `msg_${Date.now()}`,
         text: '',
-        sender: '나',
-        timestamp: new Date().toLocaleTimeString('ko-KR', { 
+        sender: currentUser.name,
+        senderDepartment: '개발팀',
+        timestamp: now.toLocaleTimeString('ko-KR', { 
           hour: 'numeric', 
           minute: '2-digit',
           hour12: true 
         }),
+        date: now.toISOString().split('T')[0],
         isMine: true,
         image: imageData,
         type: 'image',
@@ -674,15 +855,18 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ selectedChat }) => {
       const reader = new FileReader();
       reader.onload = (event) => {
         const fileData = event.target?.result as string;
+        const now = new Date();
         const newMessage: Message = {
           id: `msg_${Date.now()}`,
           text: '',
-          sender: '나',
-          timestamp: new Date().toLocaleTimeString('ko-KR', { 
+          sender: currentUser.name,
+          senderDepartment: '개발팀',
+          timestamp: now.toLocaleTimeString('ko-KR', { 
             hour: 'numeric', 
             minute: '2-digit',
             hour12: true 
           }),
+          date: now.toISOString().split('T')[0],
           isMine: true,
           type: 'file',
           fileName: file.name,
@@ -727,6 +911,16 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ selectedChat }) => {
       e.preventDefault();
       handleSendMessage();
     }
+  };
+
+  // 입력창 높이 자동 조정
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const textarea = e.target;
+    setMessage(textarea.value);
+    
+    // 높이 자동 조정
+    textarea.style.height = 'auto';
+    textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
   };
 
   const handlePaste = async (e: React.ClipboardEvent) => {
@@ -998,56 +1192,83 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ selectedChat }) => {
       </ChatHeader>
       
       <MessagesContainer>
-        <MessageGroup>
-          {(chatMessages[selectedChat.id] || []).length === 0 ? (
-            <div style={{ 
-              textAlign: 'center', 
-              color: '#999', 
-              marginTop: '50px',
-              fontSize: '14px'
-            }}>
-              {selectedChat.name}님과의 대화를 시작해보세요.
-            </div>
-          ) : (
-            (chatMessages[selectedChat.id] || []).map(msg => (
-              <div key={msg.id}>
-                <Message isMine={msg.isMine}>
-                  <MessageBubble isMine={msg.isMine} isRead={msg.isRead}>
-                    {msg.type === 'image' && msg.image ? (
-                      <MessageImage 
-                        src={msg.image} 
-                        alt="첨부 이미지"
-                        onClick={() => handleImageClick(msg.image!)}
-                        onContextMenu={(e) => handleContextMenu(e, { type: 'image', data: msg.image, fileName: `image_${msg.id}.png` })}
-                      />
-                    ) : msg.type === 'file' ? (
-                      <PreviewFile 
-                        onClick={() => handleFileClick(msg.fileData!, msg.fileName!)}
-                        onContextMenu={(e) => handleContextMenu(e, { type: 'file', data: msg.fileData, fileName: msg.fileName })}
-                        style={{ cursor: 'pointer' }}
-                      >
-                        <FileIcon>{getFileExtension(msg.fileName || '')}</FileIcon>
-                        <FileInfo>
-                          <FileName>{msg.fileName}</FileName>
-                          <FileSize>{formatFileSize(msg.fileSize || 0)}</FileSize>
-                        </FileInfo>
-                      </PreviewFile>
-                    ) : (
-                      msg.text
+        {(chatMessages[selectedChat.id] || []).length === 0 ? (
+          <div style={{ 
+            textAlign: 'center', 
+            color: '#999', 
+            marginTop: '50px',
+            fontSize: '14px'
+          }}>
+            {selectedChat.name}님과의 대화를 시작해보세요.
+          </div>
+        ) : (
+          (() => {
+            const messages = chatMessages[selectedChat.id] || [];
+            const groupedMessages = groupMessagesByDate(messages);
+            const sortedDates = Object.keys(groupedMessages).sort();
+            
+            return sortedDates.map(date => (
+              <div key={date}>
+                <DateSeparator>
+                  <DateText>{formatDate(date)}</DateText>
+                </DateSeparator>
+                
+                {groupedMessages[date].map(msg => (
+                  <MessageWithProfile key={msg.id} isMine={msg.isMine}>
+                    {!msg.isMine && (
+                      <ProfileSection isMine={false}>
+                        <ProfileImage>
+                          {getInitials(msg.sender)}
+                        </ProfileImage>
+                        <ProfileInfo isMine={false}>
+                          <ProfileName>{msg.sender}</ProfileName>
+                          <ProfileDepartment>{msg.senderDepartment}</ProfileDepartment>
+                        </ProfileInfo>
+                      </ProfileSection>
                     )}
-                  </MessageBubble>
-                </Message>
-                <MessageInfo isMine={msg.isMine}>
-                  {!msg.isMine && <SenderName>{msg.sender}</SenderName>}
-                  <MessageTime>{msg.timestamp}</MessageTime>
-                  {msg.isMine && (
-                    <MessageTime>{msg.isRead ? '읽음' : '안읽음'}</MessageTime>
-                  )}
-                </MessageInfo>
+                    
+                    <MessageContent isMine={msg.isMine}>
+                      <MessageRow isMine={msg.isMine}>
+                        <MessageBubble isMine={msg.isMine} isRead={msg.isRead}>
+                          {msg.type === 'image' && msg.image ? (
+                            <MessageImage 
+                              src={msg.image} 
+                              alt="첨부 이미지"
+                              onClick={() => handleImageClick(msg.image!)}
+                              onContextMenu={(e) => handleContextMenu(e, { type: 'image', data: msg.image, fileName: `image_${msg.id}.png` })}
+                            />
+                          ) : msg.type === 'file' ? (
+                            <PreviewFile 
+                              onClick={() => handleFileClick(msg.fileData!, msg.fileName!)}
+                              onContextMenu={(e) => handleContextMenu(e, { type: 'file', data: msg.fileData, fileName: msg.fileName })}
+                              style={{ cursor: 'pointer' }}
+                            >
+                              <FileIcon>{getFileExtension(msg.fileName || '')}</FileIcon>
+                              <FileInfo>
+                                <FileName>{msg.fileName}</FileName>
+                                <FileSize>{formatFileSize(msg.fileSize || 0)}</FileSize>
+                              </FileInfo>
+                            </PreviewFile>
+                          ) : (
+                            msg.text
+                          )}
+                        </MessageBubble>
+                        <div>
+                          <MessageTime>{msg.timestamp}</MessageTime>
+                          {msg.isMine && (
+                            <MessageTime style={{ display: 'block' }}>
+                              {msg.isRead ? '읽음' : '안읽음'}
+                            </MessageTime>
+                          )}
+                        </div>
+                      </MessageRow>
+                    </MessageContent>
+                  </MessageWithProfile>
+                ))}
               </div>
-            ))
-          )}
-        </MessageGroup>
+            ));
+          })()
+        )}
       </MessagesContainer>
       
       <InputContainer>
@@ -1118,11 +1339,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ selectedChat }) => {
           <MessageInput
             ref={inputRef}
             value={message}
-            onChange={(e) => setMessage(e.target.value)}
+            onChange={handleInputChange}
             onKeyDown={handleKeyDown}
             onPaste={handlePaste}
             placeholder="메시지를 입력하세요... (파일 드래그 또는 Ctrl+V로 붙여넣기)"
-            rows={1}
           />
           <SendButton 
             onClick={handleSendMessage}
